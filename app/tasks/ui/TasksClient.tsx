@@ -4,7 +4,9 @@ import { useState, useMemo } from 'react';
 import styled from 'styled-components';
 
 import Tasks from './Tasks';
+import Filters from './Filters';
 
+import type { ChangeEvent } from 'react';
 import type { ITaskDTO, TStatus, TPriority } from '@/lib/types/taskTypes';
 
 interface ITasksClient {
@@ -53,6 +55,18 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
     return groups;
   }, [filteredTasks]);
 
+  const handleOnStatusChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    setStatusFilter(e.target.value as TStatus | 'ALL');
+  };
+
+  const handleOnPriorityChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    setPriorityFilter(e.target.value as TPriority | 'ALL');
+  };
+
+  const handleOnSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+  };
+
   return (
     <Main>
       <Header>
@@ -66,6 +80,15 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
 
         <Button onClick={() => {}}>+ New Task</Button>
       </Header>
+
+      <Filters
+        statusFilter={statusFilter}
+        priorityFilter={priorityFilter}
+        search={search}
+        handleOnStatusChange={handleOnStatusChange}
+        handleOnPriorityChange={handleOnPriorityChange}
+        handleOnSearchChange={handleOnSearchChange}
+      />
 
       <Tasks groupedByStatus={groupedByStatus} />
     </Main>

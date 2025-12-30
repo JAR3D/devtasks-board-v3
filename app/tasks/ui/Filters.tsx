@@ -86,4 +86,5 @@ const Input = styled.input`
   background-color: #0f172a;
   padding: 0.25rem 0.5rem;
   font-size: 0.875rem;
+  color: #cbd5e1;
 `;
