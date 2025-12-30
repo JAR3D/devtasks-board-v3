@@ -3,6 +3,8 @@
 import { useState, useMemo } from 'react';
 import styled from 'styled-components';
 
+import Tasks from './Tasks';
+
 import type { ITaskDTO, TStatus, TPriority } from '@/lib/types/taskTypes';
 
 interface ITasksClient {
@@ -64,6 +66,8 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
 
         <Button onClick={() => {}}>+ New Task</Button>
       </Header>
+
+      <Tasks groupedByStatus={groupedByStatus} />
     </Main>
   );
 };
