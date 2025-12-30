@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 
 const taskSchema = new mongoose.Schema(
   {
@@ -28,4 +28,6 @@ type TTaskDocument = mongoose.InferSchemaType<typeof taskSchema> & {
   _id: string;
 };
 
-export const Task = mongoose.model<TTaskDocument>('Task', taskSchema);
+export const Task =
+  (mongoose.models.Task as Model<TTaskDocument>) ??
+  mongoose.model<TTaskDocument>('Task', taskSchema);
