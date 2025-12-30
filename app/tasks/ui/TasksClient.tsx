@@ -37,6 +37,20 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
     });
   }, [statusFilter, priorityFilter, search, tasks]);
 
+  const groupedByStatus = useMemo(() => {
+    const groups: Record<TStatus, ITaskDTO[]> = {
+      BACKLOG: [],
+      IN_PROGRESS: [],
+      DONE: [],
+    };
+
+    for (const task of filteredTasks) {
+      groups[task.status].push(task);
+    }
+
+    return groups;
+  }, [filteredTasks]);
+
   return (
     <Main>
       <Header>
