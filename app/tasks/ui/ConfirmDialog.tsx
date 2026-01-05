@@ -25,7 +25,7 @@ const ConfirmDialog = ({
   return (
     <Modal title={title} onClose={onClose}>
       <P>{message}</P>
-      <DivActions>
+      <DivActions data-testid="confirmDialogActions">
         <Button $variant="ghost" onClick={onClose}>
           Cancel
         </Button>

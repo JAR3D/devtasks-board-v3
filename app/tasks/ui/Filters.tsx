@@ -25,14 +25,22 @@ const Filters = ({
   return (
     <Section>
       <Div>
-        <Select value={statusFilter} onChange={handleOnStatusChange}>
+        <Select
+          value={statusFilter}
+          onChange={handleOnStatusChange}
+          aria-label="Status"
+        >
           <option value="ALL">All Statuses</option>
           <option value="BACKLOG">Backlog</option>
           <option value="IN_PROGRESS">In Progress</option>
           <option value="DONE">Done</option>
         </Select>
 
-        <Select value={priorityFilter} onChange={handleOnPriorityChange}>
+        <Select
+          value={priorityFilter}
+          onChange={handleOnPriorityChange}
+          aria-label="Priority"
+        >
           <option value="ALL">All Priorities</option>
           <option value="LOW">Low</option>
           <option value="Medium">Medium</option>

@@ -7,7 +7,7 @@ export interface ITaskDTO {
   status: TStatus;
   priority: TPriority;
   tags: string[];
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
   _id: string;
 }
