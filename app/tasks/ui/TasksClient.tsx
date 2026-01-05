@@ -5,6 +5,7 @@ import styled from 'styled-components';
 
 import Tasks from './Tasks';
 import Filters from './Filters';
+import TaskModal from './TaskModal';
 
 import type { ChangeEvent } from 'react';
 import type { ITaskDTO, TStatus, TPriority } from '@/lib/types/taskTypes';
@@ -20,6 +21,11 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
     'ALL',
   );
   const [search, setSearch] = useState('');
+  const [taskModalMode, setTaskModalMode] = useState<'create' | 'edit'>(
+    'create',
+  );
+  const [selectedTask, setSelectedTask] = useState<ITaskDTO | null>(null);
+  const [taskModalOpen, setTaskModalOpen] = useState(false);
 
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
@@ -67,6 +73,26 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
     setSearch(e.target.value);
   };
 
+  const openEdit = (task: ITaskDTO) => {
+    setTaskModalMode('edit');
+    setSelectedTask(task);
+    setTaskModalOpen(true);
+  };
+
+  const onSaved = (savedTask: ITaskDTO) => {
+    setTasks((prev) => {
+      const exists = prev.some((task) => task._id === savedTask._id);
+
+      if (exists) {
+        return prev.map((task) =>
+          task._id === savedTask._id ? savedTask : task,
+        );
+      }
+
+      return [savedTask, ...prev];
+    });
+  };
+
   return (
     <Main>
       <Header>
@@ -90,7 +116,15 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
         handleOnSearchChange={handleOnSearchChange}
       />
 
-      <Tasks groupedByStatus={groupedByStatus} />
+      <Tasks groupedByStatus={groupedByStatus} onEditClick={openEdit} />
+
+      <TaskModal
+        open={taskModalOpen}
+        mode={taskModalMode}
+        task={selectedTask}
+        onClose={() => setTaskModalOpen(false)}
+        onSaved={onSaved}
+      />
     </Main>
   );
 };
