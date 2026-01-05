@@ -19,9 +19,10 @@ const priorityLabels = {
 interface ITasks {
   groupedByStatus: Record<TStatus, ITaskDTO[]>;
   onEditClick: (task: ITaskDTO) => void;
+  onDelete: (task: ITaskDTO) => void;
 }
 
-const Tasks = ({ groupedByStatus, onEditClick }: ITasks) => {
+const Tasks = ({ groupedByStatus, onEditClick, onDelete }: ITasks) => {
   return (
     <Section>
       {(Object.keys(statusLabels) as TStatus[]).map((status) => (
@@ -39,7 +40,7 @@ const Tasks = ({ groupedByStatus, onEditClick }: ITasks) => {
                   <DivArticle>
                     <Span>{priorityLabels[task.priority]}</Span>
                     <Button onClick={() => onEditClick(task)}>Edit</Button>
-                    <Button $danger onClick={() => {}}>
+                    <Button $danger onClick={() => onDelete(task)}>
                       Delete
                     </Button>
                   </DivArticle>

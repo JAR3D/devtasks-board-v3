@@ -2,10 +2,12 @@
 
 import { useState, useMemo } from 'react';
 import styled from 'styled-components';
+import axios from 'axios';
 
 import Tasks from './Tasks';
 import Filters from './Filters';
 import TaskModal from './TaskModal';
+import ConfirmDialog from './ConfirmDialog';
 
 import type { ChangeEvent } from 'react';
 import type { ITaskDTO, TStatus, TPriority } from '@/lib/types/taskTypes';
@@ -26,6 +28,8 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
   );
   const [selectedTask, setSelectedTask] = useState<ITaskDTO | null>(null);
   const [taskModalOpen, setTaskModalOpen] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<ITaskDTO | null>(null);
 
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
@@ -99,6 +103,34 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
     setTaskModalOpen(true);
   };
 
+  const askDelete = (task: ITaskDTO) => {
+    setTaskToDelete(task);
+    setConfirmDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!taskToDelete) {
+      return;
+    }
+    const id = taskToDelete._id;
+
+    const prev = tasks;
+    setTasks((curr) => curr.filter((task) => task._id !== id));
+
+    try {
+      const response = await axios.delete(`/api/tasks/${id}`);
+
+      if (!response.data.ok) {
+        throw new Error('Delete failed');
+      }
+    } catch {
+      setTasks(prev);
+    } finally {
+      setConfirmDialogOpen(false);
+      setTaskToDelete(null);
+    }
+  };
+
   return (
     <Main>
       <Header>
@@ -122,7 +154,11 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
         handleOnSearchChange={handleOnSearchChange}
       />
 
-      <Tasks groupedByStatus={groupedByStatus} onEditClick={openEdit} />
+      <Tasks
+        groupedByStatus={groupedByStatus}
+        onEditClick={openEdit}
+        onDelete={askDelete}
+      />
 
       <TaskModal
         open={taskModalOpen}
@@ -130,6 +166,14 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
         task={selectedTask}
         onClose={() => setTaskModalOpen(false)}
         onSaved={onSaved}
+      />
+
+      <ConfirmDialog
+        open={confirmDialogOpen}
+        title="Delete task?"
+        message={`This will permanently delete "${taskToDelete?.title ?? ''}".`}
+        onClose={() => setConfirmDialogOpen(false)}
+        onConfirm={confirmDelete}
       />
     </Main>
   );
