@@ -81,13 +81,18 @@ const TaskModal = ({ mode, task, open, onClose, onSaved }: ITaskModal) => {
     >
       <Form onSubmit={onSubmit}>
         <DivRow>
-          <Label>Title</Label>
-          <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+          <Label htmlFor="inputTitleId">Title</Label>
+          <Input
+            id="inputTitleId"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
         </DivRow>
 
         <DivRow>
-          <Label>Description</Label>
+          <Label htmlFor="textareaDescriptionId">Description</Label>
           <Textarea
+            id="textareaDescriptionId"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
@@ -95,8 +100,9 @@ const TaskModal = ({ mode, task, open, onClose, onSaved }: ITaskModal) => {
 
         <DivTwoCols>
           <DivRow>
-            <Label>Status</Label>
+            <Label htmlFor="selectStatusId">Status</Label>
             <Select
+              id="selectStatusId"
               value={status}
               onChange={(e) => setStatus(e.target.value as TStatus)}
             >
@@ -107,8 +113,9 @@ const TaskModal = ({ mode, task, open, onClose, onSaved }: ITaskModal) => {
           </DivRow>
 
           <DivRow>
-            <Label>Priority</Label>
+            <Label htmlFor="selectPriorityId">Priority</Label>
             <Select
+              id="selectPriorityId"
               value={priority}
               onChange={(e) => setPriority(e.target.value as TPriority)}
             >
@@ -120,8 +127,12 @@ const TaskModal = ({ mode, task, open, onClose, onSaved }: ITaskModal) => {
         </DivTwoCols>
 
         <DivRow>
-          <Label>Tags (comma-separated)</Label>
-          <Input value={tags} onChange={(e) => setTags(e.target.value)} />
+          <Label htmlFor="inputTagsId">Tags (comma-separated)</Label>
+          <Input
+            id="inputTagsId"
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+          />
         </DivRow>
 
         {error && <PError>{error}</PError>}
