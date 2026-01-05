@@ -26,7 +26,7 @@ const Modal = ({ title, onClose, children }: IModal) => {
   }, [onClose]);
 
   return (
-    <DivOverlay onMouseDown={onClose}>
+    <DivOverlay data-testid="divOverlay" onMouseDown={onClose}>
       <DivModalContainer onMouseDown={(e) => e.stopPropagation()}>
         <Header>
           <H2>{title}</H2>
