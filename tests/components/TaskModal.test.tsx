@@ -8,6 +8,19 @@ jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe('TaskModal', () => {
+  it('does not render when closed', () => {
+    render(
+      <TaskModal
+        open={false}
+        mode="create"
+        task={null}
+        onClose={jest.fn()}
+        onSaved={jest.fn()}
+      />,
+    );
+    expect(screen.queryByText('New Task')).not.toBeInTheDocument();
+  });
+
   it('shows error when title is empty', async () => {
     render(
       <TaskModal
