@@ -93,6 +93,12 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
     });
   };
 
+  const openCreate = () => {
+    setTaskModalMode('create');
+    setSelectedTask(null);
+    setTaskModalOpen(true);
+  };
+
   return (
     <Main>
       <Header>
@@ -104,7 +110,7 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
           </P>
         </div>
 
-        <Button onClick={() => {}}>+ New Task</Button>
+        <Button onClick={openCreate}>+ New Task</Button>
       </Header>
 
       <Filters
