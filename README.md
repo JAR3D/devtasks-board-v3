@@ -1,36 +1,130 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DevTasks Board v3
+
+DevTasks Board is a full-stack task board built with Next.js, MongoDB, and TypeScript. It includes a kanban-style board, filters, and CRUD APIs for tasks.
+
+## Features
+
+- Create, edit, delete tasks with title, description, tags, status, and priority
+- Kanban-style board grouped by status (Backlog, In Progress, Done)
+- Filter by status and priority, plus text search
+- REST API for tasks powered by Next.js route handlers
+- UI and API route coverage with Jest + Testing Library
+
+## Tech Stack
+
+- Next.js App Router
+- React 19 + TypeScript
+- MongoDB + Mongoose
+- styled-components
+- Jest + Testing Library
+
+## Project Structure
+
+```
+app/
+  api/tasks/            # REST routes for tasks
+  tasks/ui/             # Task board UI components
+lib/
+  db.ts                 # Mongo connection
+  models/Task.ts         # Task schema
+tests/
+  api/                  # API route tests
+  components/           # UI tests
+```
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+ (or newer)
+- pnpm (recommended) or npm/yarn
+- A MongoDB database (local or hosted)
+
+### Environment Variables
+
+Create a `.env.local` file at the project root:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+MONGODB_URI=mongodb://localhost:27017/devtasks
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Install and Run
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm install
+pnpm dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open `http://localhost:3000` and navigate to `/tasks`.
 
-## Learn More
+## Scripts
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+pnpm dev
+pnpm build
+pnpm start
+pnpm lint
+pnpm test
+pnpm test:watch
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## API
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Base URL: `/api/tasks`
 
-## Deploy on Vercel
+### GET /api/tasks
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Returns all tasks sorted by newest first.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### POST /api/tasks
+
+Create a new task.
+
+```json
+{
+  "title": "Ship v1",
+  "description": "Finish the release checklist",
+  "status": "BACKLOG",
+  "priority": "MEDIUM",
+  "tags": ["release", "frontend"]
+}
+```
+
+### GET /api/tasks/:id
+
+Returns a single task by id.
+
+### PATCH /api/tasks/:id
+
+Update task fields. Any subset of fields is accepted.
+
+```json
+{
+  "status": "IN_PROGRESS",
+  "priority": "HIGH"
+}
+```
+
+### DELETE /api/tasks/:id
+
+Deletes a task.
+
+## Data Model
+
+- title: string (required)
+- description: string
+- status: BACKLOG | IN_PROGRESS | DONE
+- priority: LOW | MEDIUM | HIGH
+- tags: string[]
+- createdAt, updatedAt
+
+## Tests
+
+```bash
+pnpm test
+```
+
+## Notes
+
+- This project assumes a running MongoDB instance defined by `MONGODB_URI`.
+- For production, configure a hosted MongoDB cluster and set the environment variable in your deployment target.
