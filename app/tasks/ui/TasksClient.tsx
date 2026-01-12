@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useAppSelector, useAppDispatch } from '@/lib/store/hooks';
+import { useMemo, useEffect } from 'react';
 import styled from 'styled-components';
 import axios from 'axios';
 
@@ -8,6 +9,18 @@ import Tasks from './Tasks';
 import Filters from './Filters';
 import TaskModal from './TaskModal';
 import ConfirmDialog from './ConfirmDialog';
+
+import { setTasks, saveTask, removeTask } from '@/lib/store/slices/tasksSlice';
+import {
+  setStatusFilter,
+  setPriorityFilter,
+  setSearch,
+  openCreate,
+  openEdit,
+  openDeleteConfirm,
+  closeTaskModal,
+  closeDeleteConfirm,
+} from '@/lib/store/slices/tasksUISlice';
 
 import type { ChangeEvent } from 'react';
 import type { ITaskDTO, TStatus, TPriority } from '@/lib/types/taskTypes';
@@ -17,19 +30,20 @@ interface ITasksClient {
 }
 
 const TasksClient = ({ initialTasks }: ITasksClient) => {
-  const [tasks, setTasks] = useState(initialTasks);
-  const [statusFilter, setStatusFilter] = useState<TStatus | 'ALL'>('ALL');
-  const [priorityFilter, setPriorityFilter] = useState<TPriority | 'ALL'>(
-    'ALL',
-  );
-  const [search, setSearch] = useState('');
-  const [taskModalMode, setTaskModalMode] = useState<'create' | 'edit'>(
-    'create',
-  );
-  const [selectedTask, setSelectedTask] = useState<ITaskDTO | null>(null);
-  const [taskModalOpen, setTaskModalOpen] = useState(false);
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [taskToDelete, setTaskToDelete] = useState<ITaskDTO | null>(null);
+  const dispatch = useAppDispatch();
+
+  const tasks = useAppSelector((state) => state.tasks);
+
+  const {
+    statusFilter,
+    priorityFilter,
+    search,
+    taskModalMode,
+    selectedTask,
+    taskModalOpen,
+    confirmDialogOpen,
+    taskToDelete,
+  } = useAppSelector((state) => state.tasksUi);
 
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
@@ -66,56 +80,43 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
   }, [filteredTasks]);
 
   const handleOnStatusChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    setStatusFilter(e.target.value as TStatus | 'ALL');
+    dispatch(setStatusFilter(e.target.value as TStatus | 'ALL'));
   };
 
   const handleOnPriorityChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    setPriorityFilter(e.target.value as TPriority | 'ALL');
+    dispatch(setPriorityFilter(e.target.value as TPriority | 'ALL'));
   };
 
   const handleOnSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
+    dispatch(setSearch(e.target.value));
   };
 
-  const openEdit = (task: ITaskDTO) => {
-    setTaskModalMode('edit');
-    setSelectedTask(task);
-    setTaskModalOpen(true);
+  const onOpenEdit = (task: ITaskDTO) => {
+    dispatch(openEdit(task));
   };
 
   const onSaved = (savedTask: ITaskDTO) => {
-    setTasks((prev) => {
-      const exists = prev.some((task) => task._id === savedTask._id);
-
-      if (exists) {
-        return prev.map((task) =>
-          task._id === savedTask._id ? savedTask : task,
-        );
-      }
-
-      return [savedTask, ...prev];
-    });
+    dispatch(saveTask(savedTask));
   };
 
-  const openCreate = () => {
-    setTaskModalMode('create');
-    setSelectedTask(null);
-    setTaskModalOpen(true);
+  const onOpenCreate = () => {
+    dispatch(openCreate());
   };
 
-  const askDelete = (task: ITaskDTO) => {
-    setTaskToDelete(task);
-    setConfirmDialogOpen(true);
+  const onAskDelete = (task: ITaskDTO) => {
+    dispatch(openDeleteConfirm(task));
   };
 
   const confirmDelete = async () => {
+    // TODO: create action creator for this
+
     if (!taskToDelete) {
       return;
     }
     const id = taskToDelete._id;
 
     const prev = tasks;
-    setTasks((curr) => curr.filter((task) => task._id !== id));
+    dispatch(removeTask(id));
 
     try {
       const response = await axios.delete(`/api/tasks/${id}`);
@@ -124,12 +125,15 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
         throw new Error('Delete failed');
       }
     } catch {
-      setTasks(prev);
+      dispatch(setTasks(prev));
     } finally {
-      setConfirmDialogOpen(false);
-      setTaskToDelete(null);
+      dispatch(closeDeleteConfirm());
     }
   };
+
+  useEffect(() => {
+    dispatch(setTasks(initialTasks));
+  }, [initialTasks, dispatch]);
 
   return (
     <Main>
@@ -142,7 +146,7 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
           </P>
         </div>
 
-        <Button onClick={openCreate}>+ New Task</Button>
+        <Button onClick={onOpenCreate}>+ New Task</Button>
       </Header>
 
       <Filters
@@ -156,15 +160,15 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
 
       <Tasks
         groupedByStatus={groupedByStatus}
-        onEditClick={openEdit}
-        onDelete={askDelete}
+        onEditClick={onOpenEdit}
+        onDelete={onAskDelete}
       />
 
       <TaskModal
         open={taskModalOpen}
         mode={taskModalMode}
         task={selectedTask}
-        onClose={() => setTaskModalOpen(false)}
+        onClose={() => dispatch(closeTaskModal())}
         onSaved={onSaved}
       />
 
@@ -172,7 +176,7 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
         open={confirmDialogOpen}
         title="Delete task?"
         message={`This will permanently delete "${taskToDelete?.title ?? ''}".`}
-        onClose={() => setConfirmDialogOpen(false)}
+        onClose={() => dispatch(closeDeleteConfirm())}
         onConfirm={confirmDelete}
       />
     </Main>

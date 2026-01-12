@@ -1,7 +1,15 @@
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import axios from 'axios';
+
 import TasksClient from '@/app/tasks/ui/TasksClient';
+
+import tasksReducer from '@/lib/store/slices/tasksSlice';
+import tasksUiReducer from '@/lib/store/slices/tasksUISlice';
+
+import type { ReactElement } from 'react';
 import type { ITaskDTO } from '@/lib/types/taskTypes';
 
 jest.mock('axios');
@@ -26,9 +34,22 @@ const tasks: ITaskDTO[] = [
   },
 ];
 
+const makeStore = () =>
+  configureStore({
+    reducer: {
+      tasks: tasksReducer,
+      tasksUi: tasksUiReducer,
+    },
+  });
+
+const renderWithStore = (ui: ReactElement) => {
+  const store = makeStore();
+  return render(<Provider store={store}>{ui}</Provider>);
+};
+
 describe('TasksClient', () => {
   it('filters by status and priority', async () => {
-    render(<TasksClient initialTasks={tasks} />);
+    renderWithStore(<TasksClient initialTasks={tasks} />);
 
     const selectStatus = screen.getByRole('combobox', { name: /status/i });
     await userEvent.selectOptions(selectStatus, 'BACKLOG');
@@ -43,7 +64,7 @@ describe('TasksClient', () => {
   });
 
   it('filters by search', async () => {
-    render(<TasksClient initialTasks={tasks} />);
+    renderWithStore(<TasksClient initialTasks={tasks} />);
 
     const input = screen.getByPlaceholderText(/search/i);
     await userEvent.type(input, 'bar');
@@ -53,7 +74,7 @@ describe('TasksClient', () => {
   });
 
   it('opens create modal', async () => {
-    render(<TasksClient initialTasks={tasks} />);
+    renderWithStore(<TasksClient initialTasks={tasks} />);
     await userEvent.click(screen.getByRole('button', { name: /\+ new task/i }));
     const createButton = screen.getByRole('button', { name: /create/i });
     expect(createButton).toBeInTheDocument();
@@ -62,7 +83,7 @@ describe('TasksClient', () => {
   it('asks confirm on delete and calls API', async () => {
     mockedAxios.delete.mockResolvedValue({ data: { ok: true } } as never);
 
-    render(<TasksClient initialTasks={tasks} />);
+    renderWithStore(<TasksClient initialTasks={tasks} />);
     await userEvent.click(
       screen.getAllByRole('button', { name: /delete/i })[0],
     );
