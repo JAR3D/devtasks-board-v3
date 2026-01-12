@@ -1,7 +1,7 @@
 'use client';
 
 import { useAppSelector, useAppDispatch } from '@/lib/store/hooks';
-import { useMemo, useEffect } from 'react';
+import { useEffect } from 'react';
 import styled from 'styled-components';
 import axios from 'axios';
 
@@ -21,6 +21,7 @@ import {
   closeTaskModal,
   closeDeleteConfirm,
 } from '@/lib/store/slices/tasksUISlice';
+import { selectGroupedByStatus } from '@/lib/store/selectors/tasksSelectors';
 
 import type { ChangeEvent } from 'react';
 import type { ITaskDTO, TStatus, TPriority } from '@/lib/types/taskTypes';
@@ -45,39 +46,7 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
     taskToDelete,
   } = useAppSelector((state) => state.tasksUi);
 
-  const filteredTasks = useMemo(() => {
-    return tasks.filter((task) => {
-      if (statusFilter !== 'ALL' && task.status !== statusFilter) {
-        return false;
-      }
-
-      if (priorityFilter !== 'ALL' && task.priority !== priorityFilter) {
-        return false;
-      }
-
-      const text =
-        `${task.title} ${task.description ?? ''}`.toLocaleLowerCase();
-      if (search && !text.includes(search.toLocaleLowerCase())) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [statusFilter, priorityFilter, search, tasks]);
-
-  const groupedByStatus = useMemo(() => {
-    const groups: Record<TStatus, ITaskDTO[]> = {
-      BACKLOG: [],
-      IN_PROGRESS: [],
-      DONE: [],
-    };
-
-    for (const task of filteredTasks) {
-      groups[task.status].push(task);
-    }
-
-    return groups;
-  }, [filteredTasks]);
+  const groupedByStatus = useAppSelector(selectGroupedByStatus);
 
   const handleOnStatusChange = (e: ChangeEvent<HTMLSelectElement>) => {
     dispatch(setStatusFilter(e.target.value as TStatus | 'ALL'));
