@@ -3,14 +3,13 @@
 import { useAppSelector, useAppDispatch } from '@/lib/store/hooks';
 import { useEffect } from 'react';
 import styled from 'styled-components';
-import axios from 'axios';
 
 import Tasks from './Tasks';
 import Filters from './Filters';
 import TaskModal from './TaskModal';
 import ConfirmDialog from './ConfirmDialog';
 
-import { setTasks, saveTask, removeTask } from '@/lib/store/slices/tasksSlice';
+import { setTasks } from '@/lib/store/slices/tasksSlice';
 import {
   setStatusFilter,
   setPriorityFilter,
@@ -20,8 +19,11 @@ import {
   openDeleteConfirm,
   closeTaskModal,
   closeDeleteConfirm,
+  setDeleteError,
+  clearDeleteError,
 } from '@/lib/store/slices/tasksUISlice';
 import { selectGroupedByStatus } from '@/lib/store/selectors/tasksSelectors';
+import { deleteTask } from '@/lib/store/thunks/tasksThunks';
 
 import type { ChangeEvent } from 'react';
 import type { ITaskDTO, TStatus, TPriority } from '@/lib/types/taskTypes';
@@ -33,8 +35,6 @@ interface ITasksClient {
 const TasksClient = ({ initialTasks }: ITasksClient) => {
   const dispatch = useAppDispatch();
 
-  const tasks = useAppSelector((state) => state.tasks);
-
   const {
     statusFilter,
     priorityFilter,
@@ -44,6 +44,7 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
     taskModalOpen,
     confirmDialogOpen,
     taskToDelete,
+    deleteError,
   } = useAppSelector((state) => state.tasksUi);
 
   const groupedByStatus = useAppSelector(selectGroupedByStatus);
@@ -64,10 +65,6 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
     dispatch(openEdit(task));
   };
 
-  const onSaved = (savedTask: ITaskDTO) => {
-    dispatch(saveTask(savedTask));
-  };
-
   const onOpenCreate = () => {
     dispatch(openCreate());
   };
@@ -77,27 +74,28 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
   };
 
   const confirmDelete = async () => {
-    // TODO: create action creator for this
-
     if (!taskToDelete) {
       return;
     }
-    const id = taskToDelete._id;
 
-    const prev = tasks;
-    dispatch(removeTask(id));
+    dispatch(clearDeleteError());
 
     try {
-      const response = await axios.delete(`/api/tasks/${id}`);
-
-      if (!response.data.ok) {
-        throw new Error('Delete failed');
-      }
-    } catch {
-      dispatch(setTasks(prev));
-    } finally {
+      await dispatch(deleteTask(taskToDelete._id)).unwrap();
+      dispatch(clearDeleteError());
       dispatch(closeDeleteConfirm());
+    } catch {
+      dispatch(
+        setDeleteError(
+          'it was not possible to delete the task. Please try again.',
+        ),
+      );
     }
+  };
+
+  const onCloseConfirmDialog = () => {
+    dispatch(closeDeleteConfirm());
+    dispatch(clearDeleteError());
   };
 
   useEffect(() => {
@@ -138,15 +136,15 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
         mode={taskModalMode}
         task={selectedTask}
         onClose={() => dispatch(closeTaskModal())}
-        onSaved={onSaved}
       />
 
       <ConfirmDialog
         open={confirmDialogOpen}
         title="Delete task?"
         message={`This will permanently delete "${taskToDelete?.title ?? ''}".`}
-        onClose={() => dispatch(closeDeleteConfirm())}
+        onClose={onCloseConfirmDialog}
         onConfirm={confirmDelete}
+        error={deleteError}
       />
     </Main>
   );
