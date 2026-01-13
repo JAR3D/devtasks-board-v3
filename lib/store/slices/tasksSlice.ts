@@ -19,10 +19,6 @@ const tasksSlice = createSlice({
     setTasks(state, action: PayloadAction<ITaskDTO[]>) {
       return action.payload;
     },
-    // TODO: remove saveTask and removeTask
-    removeTask(state, action: PayloadAction<string>) {
-      return state.filter((task) => task._id !== action.payload);
-    },
   },
   extraReducers: (builder) => {
     builder
@@ -43,6 +39,6 @@ const tasksSlice = createSlice({
   },
 });
 
-export const { setTasks, removeTask } = tasksSlice.actions;
+export const { setTasks } = tasksSlice.actions;
 
 export default tasksSlice.reducer;
