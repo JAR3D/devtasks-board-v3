@@ -1,35 +1,44 @@
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import axios from 'axios';
+
 import TaskModal from '@/app/tasks/ui/TaskModal';
+
+import tasksReducer from '@/lib/store/slices/tasksSlice';
+import tasksUiReducer from '@/lib/store/slices/tasksUISlice';
+
+import type { ReactElement } from 'react';
 import type { ITaskDTO } from '@/lib/types/taskTypes';
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
+const makeStore = () =>
+  configureStore({
+    reducer: {
+      tasks: tasksReducer,
+      tasksUi: tasksUiReducer,
+    },
+  });
+
+const renderWithStore = (ui: ReactElement) => {
+  const store = makeStore();
+  return render(<Provider store={store}>{ui}</Provider>);
+};
+
 describe('TaskModal', () => {
   it('does not render when closed', () => {
-    render(
-      <TaskModal
-        open={false}
-        mode="create"
-        task={null}
-        onClose={jest.fn()}
-        onSaved={jest.fn()}
-      />,
+    renderWithStore(
+      <TaskModal open={false} mode="create" task={null} onClose={jest.fn()} />,
     );
     expect(screen.queryByText('New Task')).not.toBeInTheDocument();
   });
 
   it('shows error when title is empty', async () => {
-    render(
-      <TaskModal
-        open
-        mode="create"
-        task={null}
-        onClose={jest.fn()}
-        onSaved={jest.fn()}
-      />,
+    renderWithStore(
+      <TaskModal open mode="create" task={null} onClose={jest.fn()} />,
     );
 
     await userEvent.click(screen.getByRole('button', { name: /create/i }));
@@ -41,17 +50,10 @@ describe('TaskModal', () => {
       data: { _id: '1', title: 'New', status: 'BACKLOG', priority: 'MEDIUM' },
     } as never);
 
-    const onSaved = jest.fn();
     const onClose = jest.fn();
 
-    render(
-      <TaskModal
-        open
-        mode="create"
-        task={null}
-        onClose={onClose}
-        onSaved={onSaved}
-      />,
+    renderWithStore(
+      <TaskModal open mode="create" task={null} onClose={onClose} />,
     );
 
     await userEvent.type(screen.getByLabelText(/title/i), 'New');
@@ -59,7 +61,7 @@ describe('TaskModal', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /create/i }));
 
-    expect(mockedAxios.post).toHaveBeenCalledWith('api/tasks', {
+    expect(mockedAxios.post).toHaveBeenCalledWith('/api/tasks', {
       title: 'New',
       description: '',
       status: 'BACKLOG',
@@ -67,7 +69,6 @@ describe('TaskModal', () => {
       tags: ['a', 'b'],
     });
 
-    expect(onSaved).toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();
   });
 
@@ -85,14 +86,8 @@ describe('TaskModal', () => {
       tags: [],
     };
 
-    render(
-      <TaskModal
-        open
-        mode="edit"
-        task={task}
-        onClose={jest.fn()}
-        onSaved={jest.fn()}
-      />,
+    renderWithStore(
+      <TaskModal open mode="edit" task={task} onClose={jest.fn()} />,
     );
 
     await userEvent.click(screen.getByRole('button', { name: /save/i }));

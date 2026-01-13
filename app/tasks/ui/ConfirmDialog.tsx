@@ -7,6 +7,7 @@ interface IConfirmDialog {
   open: boolean;
   title: string;
   message: string;
+  error?: string | null;
   onClose: () => void;
   onConfirm: () => void;
 }
@@ -15,6 +16,7 @@ const ConfirmDialog = ({
   open,
   title,
   message,
+  error,
   onConfirm,
   onClose,
 }: IConfirmDialog) => {
@@ -25,6 +27,7 @@ const ConfirmDialog = ({
   return (
     <Modal title={title} onClose={onClose}>
       <P>{message}</P>
+      {error && <PError>{error}</PError>}
       <DivActions data-testid="confirmDialogActions">
         <Button $variant="ghost" onClick={onClose}>
           Cancel
@@ -42,6 +45,12 @@ export default ConfirmDialog;
 const P = styled.p`
   margin: 0 0 0.75rem 0;
   color: #e2e8f0;
+  font-size: 0.9rem;
+`;
+
+const PError = styled.p`
+  margin: 0 0 0.75rem 0;
+  color: #ef4444;
   font-size: 0.9rem;
 `;
 

@@ -2,10 +2,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import styled from 'styled-components';
 
 import Modal from './Modal';
+
+import { useAppDispatch } from '@/lib/store/hooks';
+import { createTask, updateTask } from '@/lib/store/thunks/tasksThunks';
 
 import type { ITaskDTO, TStatus, TPriority } from '@/lib/types/taskTypes';
 
@@ -14,10 +16,11 @@ interface ITaskModal {
   task: ITaskDTO | null;
   open: boolean;
   onClose: () => void;
-  onSaved: (task: ITaskDTO) => void;
 }
 
-const TaskModal = ({ mode, task, open, onClose, onSaved }: ITaskModal) => {
+const TaskModal = ({ mode, task, open, onClose }: ITaskModal) => {
+  const dispatch = useAppDispatch();
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<TStatus>('BACKLOG');
@@ -47,14 +50,14 @@ const TaskModal = ({ mode, task, open, onClose, onSaved }: ITaskModal) => {
     }
 
     try {
-      const response =
-        mode === 'create'
-          ? await axios.post('api/tasks', payload)
-          : await axios.patch(`/api/tasks/${task?._id}`, payload);
+      if (mode === 'create') {
+        await dispatch(createTask(payload)).unwrap();
+      } else {
+        await dispatch(
+          updateTask({ id: task?._id as string, data: payload }),
+        ).unwrap();
+      }
 
-      const savedTask = response.data as ITaskDTO;
-
-      onSaved(savedTask);
       onClose();
     } catch (error: unknown) {
       const message =
