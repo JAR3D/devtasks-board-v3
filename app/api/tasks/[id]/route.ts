@@ -4,14 +4,14 @@ import { Task } from '@/lib/models/Task';
 import mongoose from 'mongoose';
 
 interface IParams {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 const isValidId = (id: string) => mongoose.Types.ObjectId.isValid(id);
 
 export const GET = async (req: Request, { params }: IParams) => {
   await connectToDatabase();
-  const { id } = params;
+  const { id } = await params;
 
   if (!isValidId(id)) {
     return NextResponse.json({ error: 'invalid id' }, { status: 400 });
