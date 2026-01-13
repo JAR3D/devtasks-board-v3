@@ -11,6 +11,7 @@ type TTasksUiState = {
   selectedTask: ITaskDTO | null;
   confirmDialogOpen: boolean;
   taskToDelete: ITaskDTO | null;
+  deleteError: string | null;
 };
 
 const initialState: TTasksUiState = {
@@ -22,6 +23,7 @@ const initialState: TTasksUiState = {
   selectedTask: null,
   confirmDialogOpen: false,
   taskToDelete: null,
+  deleteError: null,
 };
 
 const tasksUiSlice = createSlice({
@@ -59,6 +61,12 @@ const tasksUiSlice = createSlice({
       state.confirmDialogOpen = false;
       state.taskToDelete = null;
     },
+    setDeleteError(state, action: PayloadAction<string | null>) {
+      state.deleteError = action.payload;
+    },
+    clearDeleteError(state) {
+      state.deleteError = null;
+    },
   },
 });
 
@@ -71,6 +79,8 @@ export const {
   closeTaskModal,
   openDeleteConfirm,
   closeDeleteConfirm,
+  setDeleteError,
+  clearDeleteError,
 } = tasksUiSlice.actions;
 
 export default tasksUiSlice.reducer;
