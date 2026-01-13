@@ -43,7 +43,7 @@ const Filters = ({
         >
           <option value="ALL">All Priorities</option>
           <option value="LOW">Low</option>
-          <option value="Medium">Medium</option>
+          <option value="MEDIUM">Medium</option>
           <option value="HIGH">High</option>
         </Select>
       </Div>
