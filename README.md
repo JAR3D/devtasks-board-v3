@@ -9,6 +9,7 @@ DevTasks Board is a full-stack task board built with Next.js, MongoDB, and TypeS
 - Filter by status and priority, plus text search
 - REST API for tasks powered by Next.js route handlers
 - UI and API route coverage with Jest + Testing Library
+- Redux Toolkit state management with slices, selectors, and async thunks
 
 ## Tech Stack
 
@@ -17,16 +18,27 @@ DevTasks Board is a full-stack task board built with Next.js, MongoDB, and TypeS
 - MongoDB + Mongoose
 - styled-components
 - Jest + Testing Library
+- Redux Toolkit + React Redux
+
+## State Management
+
+This project uses Redux Toolkit for client state:
+- tasks slice: task list and CRUD updates via thunks
+- tasksUi slice: filters, modal state, delete error
+- selectors: memoized filtered/grouped task views
+- thunks: async API calls in lib/store/thunks/tasksThunks.ts
 
 ## Project Structure
 
 ```
 app/
+  providers.tsx         # Redux Provider setup
   api/tasks/            # REST routes for tasks
   tasks/ui/             # Task board UI components
 lib/
   db.ts                 # Mongo connection
-  models/Task.ts         # Task schema
+  models/Task.ts        # Task schema
+  store/                # Redux store, slices, selectors, thunks
 tests/
   api/                  # API route tests
   components/           # UI tests
