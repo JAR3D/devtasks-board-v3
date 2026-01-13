@@ -27,7 +27,7 @@ export const GET = async (req: Request, { params }: IParams) => {
 
 export const PATCH = async (req: Request, { params }: IParams) => {
   await connectToDatabase();
-  const { id } = await params;
+  const { id } = params;
 
   if (!isValidId(id)) {
     return NextResponse.json({ error: 'invalid id' }, { status: 400 });
@@ -56,7 +56,7 @@ export const PATCH = async (req: Request, { params }: IParams) => {
 
 export const DELETE = async (req: Request, { params }: IParams) => {
   await connectToDatabase();
-  const { id } = await params;
+  const { id } = params;
 
   if (!isValidId(id)) {
     return NextResponse.json({ error: 'invalid id' }, { status: 400 });
