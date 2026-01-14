@@ -1,7 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import axios from 'axios';
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
+
+import authReducer from '@/lib/store/slices/authSlice';
 import AuthLanding from '@/app/ui/AuthLanding';
+
+import type { ReactElement } from 'react';
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
@@ -11,6 +17,18 @@ jest.mock('next/navigation', () => ({
   useRouter: () => ({ push }),
 }));
 
+const makeStore = () =>
+  configureStore({
+    reducer: {
+      auth: authReducer,
+    },
+  });
+
+const renderWithStore = (ui: ReactElement) => {
+  const store = makeStore();
+  return render(<Provider store={store}>{ui}</Provider>);
+};
+
 describe('AuthLanding', () => {
   beforeEach(() => {
     push.mockClear();
@@ -18,7 +36,7 @@ describe('AuthLanding', () => {
   });
 
   it('shows confirm password only in register mode', async () => {
-    render(<AuthLanding />);
+    renderWithStore(<AuthLanding />);
 
     expect(
       screen.queryByLabelText(/confirm password/i),
@@ -32,7 +50,7 @@ describe('AuthLanding', () => {
   it('submits login and redirects', async () => {
     mockedAxios.post.mockResolvedValue({ data: { ok: true } } as never);
 
-    render(<AuthLanding />);
+    renderWithStore(<AuthLanding />);
 
     await userEvent.type(screen.getByLabelText(/email/i), 'a@b.com');
     await userEvent.type(screen.getByLabelText(/password/i), '123456');
@@ -48,7 +66,7 @@ describe('AuthLanding', () => {
   });
 
   it('shows validation error when passwords do not match', async () => {
-    render(<AuthLanding />);
+    renderWithStore(<AuthLanding />);
 
     await userEvent.click(screen.getByRole('button', { name: /register/i }));
 
