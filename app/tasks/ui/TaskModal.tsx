@@ -59,10 +59,8 @@ const TaskModal = ({ mode, task, open, onClose }: ITaskModal) => {
       }
 
       onClose();
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : 'Something went wrong';
-      setError(message);
+    } catch (err: unknown) {
+      setError(typeof err === 'string' ? err : 'Something went wrong');
     }
   };
 
