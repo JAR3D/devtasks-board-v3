@@ -1,14 +1,17 @@
 'use client';
 
-import axios from 'axios';
 import { useState } from 'react';
+import { useAppDispatch } from '@/lib/store/hooks';
 import { useRouter } from 'next/navigation';
 import styled from 'styled-components';
+
+import { appLogin, appRegister } from '@/lib/store/thunks/authThunks';
 
 type Mode = 'login' | 'register';
 
 const AuthLanding = () => {
   const router = useRouter();
+  const dispatch = useAppDispatch();
 
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<Mode>('login');
@@ -35,24 +38,15 @@ const AuthLanding = () => {
 
     setLoading(true);
     try {
-      const endpoint = isRegister ? '/api/auth/register' : '/api/auth/login';
-
-      await axios.post(
-        endpoint,
-        { email: email.trim(), password },
-        { withCredentials: true },
-      );
+      if (isRegister) {
+        await dispatch(appRegister({ email, password })).unwrap();
+      } else {
+        await dispatch(appLogin({ email, password })).unwrap();
+      }
 
       router.push('/tasks');
     } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        const message =
-          (err.response?.data as { error?: string })?.error ??
-          'Something went wrong.';
-        setError(message);
-      } else {
-        setError('Something went wrong.');
-      }
+      setError(typeof err === 'string' ? err : 'Something went wrong.');
     } finally {
       setLoading(false);
     }
