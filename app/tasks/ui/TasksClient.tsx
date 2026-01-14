@@ -1,14 +1,16 @@
 'use client';
 
-import { useAppSelector, useAppDispatch } from '@/lib/store/hooks';
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import { useRouter } from 'next/navigation';
+import axios from 'axios';
 
 import Tasks from './Tasks';
 import Filters from './Filters';
 import TaskModal from './TaskModal';
 import ConfirmDialog from './ConfirmDialog';
 
+import { useAppSelector, useAppDispatch } from '@/lib/store/hooks';
 import { setTasks } from '@/lib/store/slices/tasksSlice';
 import {
   setStatusFilter,
@@ -33,7 +35,11 @@ interface ITasksClient {
 }
 
 const TasksClient = ({ initialTasks }: ITasksClient) => {
+  const router = useRouter();
   const dispatch = useAppDispatch();
+
+  const [logoutLoading, setLogoutLoading] = useState(false);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
 
   const {
     statusFilter,
@@ -98,6 +104,20 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
     dispatch(clearDeleteError());
   };
 
+  const onLogout = async () => {
+    setLogoutError(null);
+    setLogoutLoading(true);
+
+    try {
+      await axios.post('/api/auth/logout', {}, { withCredentials: true });
+      router.push('/');
+    } catch {
+      setLogoutError('Unable to log out. Please try again.');
+    } finally {
+      setLogoutLoading(false);
+    }
+  };
+
   useEffect(() => {
     dispatch(setTasks(initialTasks));
   }, [initialTasks, dispatch]);
@@ -113,7 +133,16 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
           </P>
         </div>
 
-        <Button onClick={onOpenCreate}>+ New Task</Button>
+        <DivHeaderActionsContainer>
+          <DivHeaderActions>
+            <Button onClick={onOpenCreate}>+ New Task</Button>
+            <ButtonSecondary onClick={onLogout} disabled={logoutLoading}>
+              {logoutLoading ? 'Signing out...' : 'Logout'}
+            </ButtonSecondary>
+          </DivHeaderActions>
+
+          {logoutError && <PError>{logoutError}</PError>}
+        </DivHeaderActionsContainer>
       </Header>
 
       <Filters
@@ -172,6 +201,14 @@ const Header = styled.header`
   }
 `;
 
+const DivHeaderActionsContainer = styled.div``;
+
+const DivHeaderActions = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+`;
+
 const H1 = styled.h1`
   font-size: 1.875rem;
   font-weight: 700;
@@ -179,6 +216,12 @@ const H1 = styled.h1`
 
 const P = styled.p`
   color: #94a3b8;
+`;
+
+const PError = styled.p`
+  color: #fca5a5;
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
 `;
 
 const Button = styled.button`
@@ -192,5 +235,25 @@ const Button = styled.button`
 
   &:hover {
     background-color: #34d399;
+  }
+`;
+
+const ButtonSecondary = styled.button`
+  border-radius: 0.25rem;
+  border: 1px solid #334155;
+  background-color: #0f172a;
+  color: #e2e8f0;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover {
+    filter: brightness(1.1);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
   }
 `;
