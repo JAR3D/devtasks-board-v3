@@ -10,6 +10,7 @@ DevTasks Board is a full-stack task board built with Next.js, MongoDB, and TypeS
 - REST API for tasks powered by Next.js route handlers
 - UI and API route coverage with Jest + Testing Library
 - Redux Toolkit state management with slices, selectors, and async thunks
+- JWT authentication with login/register and HttpOnly cookies
 
 ## Tech Stack
 
@@ -19,6 +20,7 @@ DevTasks Board is a full-stack task board built with Next.js, MongoDB, and TypeS
 - styled-components
 - Jest + Testing Library
 - Redux Toolkit + React Redux
+- JSON Web Token (jsonwebtoken) + bcrypt
 
 ## State Management
 
@@ -33,11 +35,16 @@ This project uses Redux Toolkit for client state:
 ```
 app/
   providers.tsx         # Redux Provider setup
+  api/auth/             # Auth routes (register/login/logout)
   api/tasks/            # REST routes for tasks
   tasks/ui/             # Task board UI components
+  ui/AuthLanding.tsx    # Landing page auth UI
 lib/
+  auth.ts               # JWT + bcrypt helpers
+  authServer.ts         # Server-side cookie auth
   db.ts                 # Mongo connection
   models/Task.ts        # Task schema
+  models/User.ts        # User schema
   store/                # Redux store, slices, selectors, thunks
 tests/
   api/                  # API route tests
@@ -58,6 +65,7 @@ Create a `.env.local` file at the project root:
 
 ```bash
 MONGODB_URI=mongodb://localhost:27017/devtasks
+JWT_SECRET=your_long_random_secret
 ```
 
 ### Install and Run
@@ -67,7 +75,7 @@ pnpm install
 pnpm dev
 ```
 
-Open `http://localhost:3000` and navigate to `/tasks`.
+Open `http://localhost:3000` to login/register. After authentication, you can access `/tasks`.
 
 ## Scripts
 
@@ -82,7 +90,9 @@ pnpm test:watch
 
 ## API
 
-Base URL: `/api/tasks`
+Base URL (tasks): `/api/tasks`
+
+All task routes require authentication via the HttpOnly `auth_token` cookie.
 
 ### GET /api/tasks
 
@@ -120,6 +130,36 @@ Update task fields. Any subset of fields is accepted.
 ### DELETE /api/tasks/:id
 
 Deletes a task.
+
+## Auth API
+
+Base URL: `/api/auth`
+
+### POST /api/auth/register
+
+Create a new user and set the auth cookie.
+
+```json
+{
+  "email": "you@company.com",
+  "password": "yourpassword"
+}
+```
+
+### POST /api/auth/login
+
+Login and set the auth cookie.
+
+```json
+{
+  "email": "you@company.com",
+  "password": "yourpassword"
+}
+```
+
+### POST /api/auth/logout
+
+Clears the auth cookie.
 
 ## Data Model
 
