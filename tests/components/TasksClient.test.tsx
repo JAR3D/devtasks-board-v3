@@ -15,6 +15,11 @@ import type { ITaskDTO } from '@/lib/types/taskTypes';
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
+const push = jest.fn();
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push }),
+}));
+
 const tasks: ITaskDTO[] = [
   {
     _id: '1',
@@ -48,6 +53,25 @@ const renderWithStore = (ui: ReactElement) => {
 };
 
 describe('TasksClient', () => {
+  beforeEach(() => {
+    push.mockClear();
+  });
+
+  it('logs out and redirects', async () => {
+    mockedAxios.post.mockResolvedValue({ data: { ok: true } } as never);
+
+    renderWithStore(<TasksClient initialTasks={tasks} />);
+
+    await userEvent.click(screen.getByRole('button', { name: /logout/i }));
+
+    expect(mockedAxios.post).toHaveBeenCalledWith(
+      '/api/auth/logout',
+      {},
+      { withCredentials: true },
+    );
+    expect(push).toHaveBeenCalledWith('/');
+  });
+
   it('filters by status and priority', async () => {
     renderWithStore(<TasksClient initialTasks={tasks} />);
 
