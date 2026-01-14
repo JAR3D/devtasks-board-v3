@@ -1,8 +1,17 @@
+import { redirect } from 'next/navigation';
+
+import { getAuthFromCookies } from '@/lib/authServer';
 import TasksClient from './ui/TasksClient';
 import { connectToDatabase } from '@/lib/db';
 import { Task } from '@/lib/models/Task';
 
 const TasksPage = async () => {
+  const auth = await getAuthFromCookies();
+
+  if (!auth) {
+    redirect('/');
+  }
+
   await connectToDatabase();
 
   const tasks = await Task.find().sort({ createdAt: -1 }).lean();

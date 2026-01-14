@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
+import mongoose from 'mongoose';
+
 import { connectToDatabase } from '@/lib/db';
 import { Task } from '@/lib/models/Task';
-import mongoose from 'mongoose';
+import { getAuthFromCookies } from '@/lib/authServer';
 
 interface IParams {
   params: Promise<{ id: string }>;
@@ -10,6 +12,11 @@ interface IParams {
 const isValidId = (id: string) => mongoose.Types.ObjectId.isValid(id);
 
 export const GET = async (req: Request, { params }: IParams) => {
+  const auth = await getAuthFromCookies();
+  if (!auth) {
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  }
+
   await connectToDatabase();
   const { id } = await params;
 
@@ -26,6 +33,11 @@ export const GET = async (req: Request, { params }: IParams) => {
 };
 
 export const PATCH = async (req: Request, { params }: IParams) => {
+  const auth = await getAuthFromCookies();
+  if (!auth) {
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  }
+
   await connectToDatabase();
   const { id } = await params;
 
@@ -55,6 +67,11 @@ export const PATCH = async (req: Request, { params }: IParams) => {
 };
 
 export const DELETE = async (req: Request, { params }: IParams) => {
+  const auth = await getAuthFromCookies();
+  if (!auth) {
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  }
+
   await connectToDatabase();
   const { id } = await params;
 

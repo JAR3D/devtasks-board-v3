@@ -1,14 +1,26 @@
 import { NextResponse } from 'next/server';
+
+import { getAuthFromCookies } from '@/lib/authServer';
 import { connectToDatabase } from '@/lib/db';
 import { Task } from '@/lib/models/Task';
 
 export const GET = async () => {
+  const auth = await getAuthFromCookies();
+  if (!auth) {
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  }
+
   await connectToDatabase();
   const tasks = await Task.find().sort({ createdAt: -1 }).lean();
   return NextResponse.json(tasks);
 };
 
 export const POST = async (req: Request) => {
+  const auth = await getAuthFromCookies();
+  if (!auth) {
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  }
+
   await connectToDatabase();
   const body = await req.json();
 
