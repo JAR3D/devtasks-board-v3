@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
 
 import Tasks from './Tasks';
 import Filters from './Filters';
@@ -26,6 +25,7 @@ import {
 } from '@/lib/store/slices/tasksUISlice';
 import { selectGroupedByStatus } from '@/lib/store/selectors/tasksSelectors';
 import { deleteTask } from '@/lib/store/thunks/tasksThunks';
+import { appLogout } from '@/lib/store/thunks/authThunks';
 
 import type { ChangeEvent } from 'react';
 import type { ITaskDTO, TStatus, TPriority } from '@/lib/types/taskTypes';
@@ -109,7 +109,7 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
     setLogoutLoading(true);
 
     try {
-      await axios.post('/api/auth/logout', {}, { withCredentials: true });
+      await dispatch(appLogout()).unwrap();
       router.push('/');
     } catch {
       setLogoutError('Unable to log out. Please try again.');
