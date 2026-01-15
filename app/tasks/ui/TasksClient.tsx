@@ -25,7 +25,7 @@ import {
 } from '@/lib/store/slices/tasksUISlice';
 import { selectGroupedByStatus } from '@/lib/store/selectors/tasksSelectors';
 import { deleteTask } from '@/lib/store/thunks/tasksThunks';
-import { appLogout } from '@/lib/store/thunks/authThunks';
+import { logoutAction } from '@/app/actions/authActions';
 
 import type { ChangeEvent } from 'react';
 import type { ITaskDTO, TStatus, TPriority } from '@/lib/types/taskTypes';
@@ -109,7 +109,13 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
     setLogoutLoading(true);
 
     try {
-      await dispatch(appLogout()).unwrap();
+      const result = await logoutAction();
+
+      if (!result.ok) {
+        setLogoutError(result.error);
+        return;
+      }
+
       router.push('/');
     } catch {
       setLogoutError('Unable to log out. Please try again.');
