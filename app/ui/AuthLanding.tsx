@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useActionState } from 'react';
 import { useAppDispatch } from '@/lib/store/hooks';
 import { useRouter } from 'next/navigation';
 import styled from 'styled-components';
 
-import { appLogin, appRegister } from '@/lib/store/thunks/authThunks';
+import { loginFormAction, registerFormAction } from '@/app/actions/authActions';
+import { setLoggedIn } from '@/lib/store/slices/authSlice';
 
 type Mode = 'login' | 'register';
 
@@ -13,44 +14,47 @@ const AuthLanding = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
-  const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<Mode>('login');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [clientError, setClientError] = useState<string | null>(null);
+
+  const [loginState, loginAction] = useActionState(loginFormAction, {
+    ok: false,
+    error: '',
+  });
+  const [registerState, registerAction] = useActionState(registerFormAction, {
+    ok: false,
+    error: '',
+  });
 
   const isRegister = mode === 'register';
+  const action = isRegister ? registerAction : loginAction;
+  const state = isRegister ? registerState : loginState;
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+  const onClientValidate = (e: React.FormEvent) => {
+    setClientError(null);
 
-    if (isRegister && password !== confirm) {
-      setError('Passwords do not match.');
+    if (isRegister && !confirm) {
+      setClientError('Please confirm your password.');
+      e.preventDefault();
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      if (isRegister) {
-        await dispatch(appRegister({ email, password })).unwrap();
-      } else {
-        await dispatch(appLogin({ email, password })).unwrap();
-      }
-
-      router.push('/tasks');
-    } catch (err: unknown) {
-      setError(typeof err === 'string' ? err : 'Something went wrong.');
-    } finally {
-      setLoading(false);
+    if (
+      isRegister &&
+      (e.target as HTMLFormElement).password.value !== confirm
+    ) {
+      setClientError('Passwords do not match.');
+      e.preventDefault();
     }
   };
+
+  useEffect(() => {
+    if (state.ok) {
+      dispatch(setLoggedIn());
+      router.push('/tasks');
+    }
+  }, [state.ok, dispatch, router]);
 
   return (
     <Main>
@@ -85,14 +89,13 @@ const AuthLanding = () => {
             </ButtonTab>
           </DivTabs>
 
-          <Form onSubmit={onSubmit}>
+          <Form action={action} onSubmit={onClientValidate}>
             <DivField>
               <Label htmlFor="inputEmailId">Email</Label>
               <Input
                 id="inputEmailId"
+                name="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@company.com"
                 required
               />
@@ -103,8 +106,7 @@ const AuthLanding = () => {
               <Input
                 id="inputPasswordId"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                name="password"
                 placeholder="••••••••"
                 required
               />
@@ -116,6 +118,7 @@ const AuthLanding = () => {
                 <Input
                   id="inputConfirmPasswordId"
                   type="password"
+                  name="confirm"
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                   placeholder="••••••••"
@@ -124,14 +127,14 @@ const AuthLanding = () => {
               </DivField>
             )}
 
-            {error && <PError>{error}</PError>}
+            {clientError && <PError>{clientError}</PError>}
 
-            <ButtonSubmit type="submit" disabled={loading}>
-              {loading
-                ? 'Please wait...'
-                : isRegister
-                  ? 'Create account'
-                  : 'Sign in'}
+            {state.ok === false && state.error && (
+              <PError>{state.error}</PError>
+            )}
+
+            <ButtonSubmit type="submit">
+              {isRegister ? 'Create account' : 'Sign in'}
             </ButtonSubmit>
           </Form>
         </DivCard>
