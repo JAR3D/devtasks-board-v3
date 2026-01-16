@@ -11,7 +11,9 @@ export const GET = async () => {
   }
 
   await connectToDatabase();
-  const tasks = await Task.find().sort({ createdAt: -1 }).lean();
+  const tasks = await Task.find({ userId: auth.userId })
+    .sort({ createdAt: -1 })
+    .lean();
   return NextResponse.json(tasks);
 };
 
@@ -34,6 +36,7 @@ export const POST = async (req: Request) => {
     status: body.status ?? 'BACKLOG',
     priority: body.priority ?? 'MEDIUM',
     tags: body.tags ?? [],
+    userId: auth.userId,
   });
 
   return NextResponse.json(task, { status: 201 });

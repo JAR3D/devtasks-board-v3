@@ -33,6 +33,7 @@ describe('GET /api/tasks', () => {
     const res = await GET();
     const data = await res.json();
     expect(data).toEqual([{ _id: '1' }]);
+    expect(MockedTask.find).toHaveBeenCalledWith({ userId: 'test' });
   });
 });
 
@@ -64,5 +65,9 @@ describe('POST /api/tasks', () => {
     const data = await res.json();
     expect(res.status).toBe(201);
     expect(data._id).toBe('1');
+
+    expect(MockedTask.create).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 'test' }),
+    );
   });
 });

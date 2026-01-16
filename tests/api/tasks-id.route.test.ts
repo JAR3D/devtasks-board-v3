@@ -11,9 +11,9 @@ jest.mock('@/lib/db', () => ({
 
 jest.mock('@/lib/models/Task', () => ({
   Task: {
-    findById: jest.fn(),
-    findByIdAndUpdate: jest.fn(),
-    findByIdAndDelete: jest.fn(),
+    findOne: jest.fn(),
+    findOneAndUpdate: jest.fn(),
+    findOneAndDelete: jest.fn(),
   },
 }));
 
@@ -33,7 +33,7 @@ describe('GET /api/tasks/:id', () => {
   });
 
   it('returns 404 when not found', async () => {
-    (MockedTask.findById as jest.Mock).mockReturnValue({
+    (MockedTask.findOne as jest.Mock).mockReturnValue({
       lean: jest.fn().mockResolvedValue(null),
     });
 
@@ -41,6 +41,10 @@ describe('GET /api/tasks/:id', () => {
       params: Promise.resolve({ id: '507f1f77bcf86cd799439011' }),
     });
     expect(res.status).toBe(404);
+    expect(MockedTask.findOne).toHaveBeenCalledWith({
+      _id: '507f1f77bcf86cd799439011',
+      userId: 'test',
+    });
   });
 });
 
@@ -53,7 +57,7 @@ describe('PATCH /api/tasks/:id', () => {
   });
 
   it('returns updated task', async () => {
-    (MockedTask.findByIdAndUpdate as jest.Mock).mockReturnValue({
+    (MockedTask.findOneAndUpdate as jest.Mock).mockReturnValue({
       lean: jest.fn().mockResolvedValue({ _id: '1', title: 'Updated' }),
     });
 
@@ -67,12 +71,17 @@ describe('PATCH /api/tasks/:id', () => {
     });
     const data = await res.json();
     expect(data.title).toBe('Updated');
+    expect(MockedTask.findOneAndUpdate).toHaveBeenCalledWith(
+      { _id: '507f1f77bcf86cd799439011', userId: 'test' },
+      expect.any(Object),
+      { new: true },
+    );
   });
 });
 
 describe('DELETE /api/tasks/:id', () => {
   it('returns 404 when not found', async () => {
-    (MockedTask.findByIdAndDelete as jest.Mock).mockReturnValue({
+    (MockedTask.findOneAndDelete as jest.Mock).mockReturnValue({
       lean: jest.fn().mockResolvedValue(null),
     });
 
@@ -81,10 +90,14 @@ describe('DELETE /api/tasks/:id', () => {
     });
 
     expect(res.status).toBe(404);
+    expect(MockedTask.findOneAndDelete).toHaveBeenCalledWith({
+      _id: '507f1f77bcf86cd799439011',
+      userId: 'test',
+    });
   });
 
   it('returns ok', async () => {
-    (MockedTask.findByIdAndDelete as jest.Mock).mockReturnValue({
+    (MockedTask.findOneAndDelete as jest.Mock).mockReturnValue({
       lean: jest.fn().mockResolvedValue({ _id: '1' }),
     });
 
@@ -94,5 +107,9 @@ describe('DELETE /api/tasks/:id', () => {
 
     const data = await res.json();
     expect(data.ok).toBe(true);
+    expect(MockedTask.findOneAndDelete).toHaveBeenCalledWith({
+      _id: '507f1f77bcf86cd799439011',
+      userId: 'test',
+    });
   });
 });

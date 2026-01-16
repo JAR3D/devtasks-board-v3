@@ -14,7 +14,9 @@ const TasksPage = async () => {
 
   await connectToDatabase();
 
-  const tasks = await Task.find().sort({ createdAt: -1 }).lean();
+  const tasks = await Task.find({ userId: auth.userId })
+    .sort({ createdAt: -1 })
+    .lean();
 
   const safeTasks = tasks.map((task) => {
     return {

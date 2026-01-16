@@ -18,6 +18,12 @@ const taskSchema = new mongoose.Schema(
       default: 'MEDIUM',
     },
     tags: [String],
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
   },
   {
     timestamps: true,
