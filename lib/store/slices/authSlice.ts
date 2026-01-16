@@ -1,7 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-import { appLogout, appLogin, appRegister } from '../thunks/authThunks';
-
 type TAuthState = {
   loggedIn: boolean;
 };
@@ -17,21 +15,12 @@ const authSlice = createSlice({
     setLoggedIn(state) {
       state.loggedIn = true;
     },
-  },
-  extraReducers: (builder) => {
-    builder
-      .addCase(appLogout.fulfilled, (state) => {
-        state.loggedIn = false;
-      })
-      .addCase(appLogin.fulfilled, (state) => {
-        state.loggedIn = true;
-      })
-      .addCase(appRegister.fulfilled, (state) => {
-        state.loggedIn = true;
-      });
+    setLoggedOut(state) {
+      state.loggedIn = false;
+    },
   },
 });
 
-export const { setLoggedIn } = authSlice.actions;
+export const { setLoggedIn, setLoggedOut } = authSlice.actions;
 
 export default authSlice.reducer;
