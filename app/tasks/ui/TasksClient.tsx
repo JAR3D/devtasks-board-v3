@@ -174,21 +174,23 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
         onDelete={onAskDelete}
       />
 
-      <TaskModal
-        open={taskModalOpen}
-        mode={taskModalMode}
-        task={selectedTask}
-        onClose={() => dispatch(closeTaskModal())}
-      />
+      {taskModalOpen && (
+        <TaskModal
+          mode={taskModalMode}
+          task={selectedTask}
+          onClose={() => dispatch(closeTaskModal())}
+        />
+      )}
 
-      <ConfirmDialog
-        open={confirmDialogOpen}
-        title="Delete task?"
-        message={`This will permanently delete "${taskToDelete?.title ?? ''}".`}
-        onClose={onCloseConfirmDialog}
-        onConfirm={confirmDelete}
-        error={deleteError}
-      />
+      {confirmDialogOpen && (
+        <ConfirmDialog
+          title="Delete task?"
+          message={`This will permanently delete "${taskToDelete?.title ?? ''}".`}
+          onClose={onCloseConfirmDialog}
+          onConfirm={confirmDelete}
+          error={deleteError}
+        />
+      )}
     </Main>
   );
 };
