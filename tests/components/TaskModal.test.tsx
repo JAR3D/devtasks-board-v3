@@ -42,18 +42,11 @@ describe('TaskModal', () => {
     mockedUpdate.mockReset();
   });
 
-  it('does not render when closed', () => {
-    renderWithStore(
-      <TaskModal open={false} mode="create" task={null} onClose={jest.fn()} />,
-    );
-    expect(screen.queryByText('New Task')).not.toBeInTheDocument();
-  });
-
   it('shows error when title is empty', async () => {
     mockedCreate.mockResolvedValue({ ok: false, error: 'title is required' });
 
     renderWithStore(
-      <TaskModal open mode="create" task={null} onClose={jest.fn()} />,
+      <TaskModal mode="create" task={null} onClose={jest.fn()} />,
     );
 
     await userEvent.click(screen.getByRole('button', { name: /create/i }));
@@ -75,9 +68,7 @@ describe('TaskModal', () => {
 
     const onClose = jest.fn();
 
-    renderWithStore(
-      <TaskModal open mode="create" task={null} onClose={onClose} />,
-    );
+    renderWithStore(<TaskModal mode="create" task={null} onClose={onClose} />);
 
     await userEvent.type(screen.getByLabelText(/title/i), 'New');
     await userEvent.type(screen.getByLabelText(/tags/i), 'a, b');
@@ -114,9 +105,7 @@ describe('TaskModal', () => {
       tags: [],
     };
 
-    renderWithStore(
-      <TaskModal open mode="edit" task={task} onClose={jest.fn()} />,
-    );
+    renderWithStore(<TaskModal mode="edit" task={task} onClose={jest.fn()} />);
 
     await userEvent.click(screen.getByRole('button', { name: /save/i }));
 
