@@ -17,11 +17,10 @@ import type { ITaskDTO } from '@/lib/types/taskTypes';
 interface ITaskModal {
   mode: 'create' | 'edit';
   task: ITaskDTO | null;
-  open: boolean;
   onClose: () => void;
 }
 
-const TaskModal = ({ mode, task, open, onClose }: ITaskModal) => {
+const TaskModal = ({ mode, task, onClose }: ITaskModal) => {
   const dispatch = useAppDispatch();
 
   const [error, setError] = useState<string | null>(null);
@@ -57,8 +56,6 @@ const TaskModal = ({ mode, task, open, onClose }: ITaskModal) => {
       setError(errorMessage);
     }
   }, [errorMessage]);
-
-  if (!open) return null;
 
   return (
     <Modal
