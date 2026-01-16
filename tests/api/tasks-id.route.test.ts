@@ -17,6 +17,13 @@ jest.mock('@/lib/models/Task', () => ({
   },
 }));
 
+jest.mock('@/lib/authServer', () => ({
+  getAuthFromCookies: jest.fn().mockResolvedValue({
+    userId: 'test',
+    email: 'test@example.com',
+  }),
+}));
+
 describe('GET /api/tasks/:id', () => {
   it('returns 400 for invalid id', async () => {
     const res = await GET(new Request('http://localhost'), {
