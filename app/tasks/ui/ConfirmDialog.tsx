@@ -4,7 +4,6 @@ import styled from 'styled-components';
 import Modal from './Modal';
 
 interface IConfirmDialog {
-  open: boolean;
   title: string;
   message: string;
   error?: string | null;
@@ -13,17 +12,12 @@ interface IConfirmDialog {
 }
 
 const ConfirmDialog = ({
-  open,
   title,
   message,
   error,
   onConfirm,
   onClose,
 }: IConfirmDialog) => {
-  if (!open) {
-    return null;
-  }
-
   return (
     <Modal title={title} onClose={onClose}>
       <P>{message}</P>
