@@ -1,16 +1,21 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import axios from 'axios';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 
 import authReducer from '@/lib/store/slices/authSlice';
+import { loginFormAction, registerFormAction } from '@/app/actions/authActions';
 import AuthLanding from '@/app/ui/AuthLanding';
 
 import type { ReactElement } from 'react';
 
-jest.mock('axios');
-const mockedAxios = axios as jest.Mocked<typeof axios>;
+jest.mock('@/app/actions/authActions', () => ({
+  loginFormAction: jest.fn(),
+  registerFormAction: jest.fn(),
+}));
+
+const mockedLogin = loginFormAction as jest.Mock;
+const mockedRegister = registerFormAction as jest.Mock;
 
 const push = jest.fn();
 jest.mock('next/navigation', () => ({
@@ -32,7 +37,7 @@ const renderWithStore = (ui: ReactElement) => {
 describe('AuthLanding', () => {
   beforeEach(() => {
     push.mockClear();
-    mockedAxios.post.mockReset();
+    mockedRegister.mockReset();
   });
 
   it('shows confirm password only in register mode', async () => {
@@ -48,7 +53,7 @@ describe('AuthLanding', () => {
   });
 
   it('submits login and redirects', async () => {
-    mockedAxios.post.mockResolvedValue({ data: { ok: true } } as never);
+    mockedLogin.mockResolvedValue({ ok: true });
 
     renderWithStore(<AuthLanding />);
 
@@ -56,12 +61,27 @@ describe('AuthLanding', () => {
     await userEvent.type(screen.getByLabelText(/password/i), '123456');
     await userEvent.click(screen.getByRole('button', { name: /sign in/i }));
 
-    expect(mockedAxios.post).toHaveBeenCalledWith(
-      '/api/auth/login',
-      { email: 'a@b.com', password: '123456' },
-      { withCredentials: true },
+    expect(mockedLogin).toHaveBeenCalled();
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/tasks'));
+  });
+
+  it('submits register and redirects', async () => {
+    mockedRegister.mockResolvedValue({ ok: true });
+
+    renderWithStore(<AuthLanding />);
+
+    await userEvent.click(screen.getByRole('button', { name: /register/i }));
+
+    await userEvent.type(screen.getByLabelText(/email/i), 'a@b.com');
+    await userEvent.type(screen.getByLabelText(/^password$/i), '123456');
+    await userEvent.type(screen.getByLabelText(/confirm password/i), '123456');
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /create account/i }),
     );
 
+    expect(mockedRegister).toHaveBeenCalled();
     await waitFor(() => expect(push).toHaveBeenCalledWith('/tasks'));
   });
 
