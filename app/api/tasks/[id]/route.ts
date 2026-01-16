@@ -24,7 +24,7 @@ export const GET = async (req: Request, { params }: IParams) => {
     return NextResponse.json({ error: 'invalid id' }, { status: 400 });
   }
 
-  const task = await Task.findById(id).lean();
+  const task = await Task.findOne({ _id: id, userId: auth.userId }).lean();
   if (!task) {
     return NextResponse.json({ error: 'task not found' }, { status: 404 });
   }
@@ -47,8 +47,8 @@ export const PATCH = async (req: Request, { params }: IParams) => {
 
   const body = await req.json();
 
-  const updatedTask = await Task.findByIdAndUpdate(
-    id,
+  const updatedTask = await Task.findOneAndUpdate(
+    { _id: id, userId: auth.userId },
     {
       ...(body.title && { title: body.title }),
       ...(body.description !== undefined && { description: body.description }),
@@ -79,7 +79,10 @@ export const DELETE = async (req: Request, { params }: IParams) => {
     return NextResponse.json({ error: 'invalid id' }, { status: 400 });
   }
 
-  const deletedTask = await Task.findByIdAndDelete(id).lean();
+  const deletedTask = await Task.findOneAndDelete({
+    _id: id,
+    userId: auth.userId,
+  }).lean();
   if (!deletedTask) {
     return NextResponse.json({ error: 'task not found' }, { status: 404 });
   }
