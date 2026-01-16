@@ -5,6 +5,7 @@ DevTasks Board is a full-stack task board built with Next.js, MongoDB, and TypeS
 ## Features
 
 - Create, edit, delete tasks with title, description, tags, status, and priority
+- Tasks are scoped per user (each user only sees their own tasks)
 - Kanban-style board grouped by status (Backlog, In Progress, Done)
 - Filter by status and priority, plus text search
 - REST API for tasks powered by Next.js route handlers
@@ -167,6 +168,7 @@ Clears the auth cookie.
 
 ## Data Model
 
+- userId: ObjectId (required, task owner)
 - title: string (required)
 - description: string
 - status: BACKLOG | IN_PROGRESS | DONE
