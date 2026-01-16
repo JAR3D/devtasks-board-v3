@@ -1,15 +1,18 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useActionState } from 'react';
 import styled from 'styled-components';
 
 import Modal from './Modal';
 
 import { useAppDispatch } from '@/lib/store/hooks';
-import { createTask, updateTask } from '@/lib/store/thunks/tasksThunks';
+import {
+  createTaskFormAction,
+  updateTaskFormAction,
+} from '@/app/tasks/actions/taskActions';
+import { upsertTask } from '@/lib/store/slices/tasksSlice';
 
-import type { ITaskDTO, TStatus, TPriority } from '@/lib/types/taskTypes';
+import type { ITaskDTO } from '@/lib/types/taskTypes';
 
 interface ITaskModal {
   mode: 'create' | 'edit';
@@ -21,57 +24,39 @@ interface ITaskModal {
 const TaskModal = ({ mode, task, open, onClose }: ITaskModal) => {
   const dispatch = useAppDispatch();
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [status, setStatus] = useState<TStatus>('BACKLOG');
-  const [priority, setPriority] = useState<TPriority>('MEDIUM');
-  const [tags, setTags] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const [createState, createAction] = useActionState(createTaskFormAction, {
+    ok: false,
+    error: '',
+  });
+  const [updateState, updateAction] = useActionState(updateTaskFormAction, {
+    ok: false,
+    error: '',
+  });
 
-    setError(null);
+  const isEdit = mode === 'edit';
 
-    const payload = {
-      title: title.trim(),
-      description: description.trim(),
-      status,
-      priority,
-      tags: tags
-        .split(',')
-        .map((t) => t.trim())
-        .filter(Boolean),
-    };
+  const action = mode === 'create' ? createAction : updateAction;
+  const state = mode === 'create' ? createState : updateState;
 
-    if (!payload.title) {
-      setError('Title is required.');
-      return;
-    }
-
-    try {
-      if (mode === 'create') {
-        await dispatch(createTask(payload)).unwrap();
-      } else {
-        await dispatch(
-          updateTask({ id: task?._id as string, data: payload }),
-        ).unwrap();
-      }
-
-      onClose();
-    } catch (err: unknown) {
-      setError(typeof err === 'string' ? err : 'Something went wrong');
-    }
-  };
+  // Derived values to keep useEffect deps stable and avoid accessing union-only fields (ok true/false).
+  const taskResult = state.ok ? state.task : null;
+  const errorMessage = state.ok ? '' : state.error;
 
   useEffect(() => {
-    if (!open) return;
-    setTitle(task?.title ?? '');
-    setDescription(task?.description ?? '');
-    setStatus(task?.status ?? 'BACKLOG');
-    setPriority(task?.priority ?? 'MEDIUM');
-    setTags((task?.tags ?? []).join(', '));
-  }, [open, task]);
+    if (taskResult) {
+      dispatch(upsertTask(taskResult));
+      onClose();
+    }
+  }, [taskResult, dispatch, onClose]);
+
+  useEffect(() => {
+    if (errorMessage) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setError(errorMessage);
+    }
+  }, [errorMessage]);
 
   if (!open) return null;
 
@@ -80,13 +65,13 @@ const TaskModal = ({ mode, task, open, onClose }: ITaskModal) => {
       title={mode === 'create' ? 'New Task' : 'Edit Task'}
       onClose={onClose}
     >
-      <Form onSubmit={onSubmit}>
+      <Form action={action}>
         <DivRow>
           <Label htmlFor="inputTitleId">Title</Label>
           <Input
             id="inputTitleId"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            name="title"
+            defaultValue={isEdit ? (task?.title ?? '') : ''}
           />
         </DivRow>
 
@@ -94,8 +79,8 @@ const TaskModal = ({ mode, task, open, onClose }: ITaskModal) => {
           <Label htmlFor="textareaDescriptionId">Description</Label>
           <Textarea
             id="textareaDescriptionId"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            name="description"
+            defaultValue={isEdit ? (task?.description ?? '') : ''}
           />
         </DivRow>
 
@@ -104,8 +89,8 @@ const TaskModal = ({ mode, task, open, onClose }: ITaskModal) => {
             <Label htmlFor="selectStatusId">Status</Label>
             <Select
               id="selectStatusId"
-              value={status}
-              onChange={(e) => setStatus(e.target.value as TStatus)}
+              name="status"
+              defaultValue={isEdit ? (task?.status ?? 'BACKLOG') : 'BACKLOG'}
             >
               <option value="BACKLOG">Backlog</option>
               <option value="IN_PROGRESS">In Progress</option>
@@ -117,8 +102,8 @@ const TaskModal = ({ mode, task, open, onClose }: ITaskModal) => {
             <Label htmlFor="selectPriorityId">Priority</Label>
             <Select
               id="selectPriorityId"
-              value={priority}
-              onChange={(e) => setPriority(e.target.value as TPriority)}
+              name="priority"
+              defaultValue={isEdit ? (task?.priority ?? 'MEDIUM') : 'MEDIUM'}
             >
               <option value="LOW">Low</option>
               <option value="MEDIUM">Medium</option>
@@ -131,10 +116,14 @@ const TaskModal = ({ mode, task, open, onClose }: ITaskModal) => {
           <Label htmlFor="inputTagsId">Tags (comma-separated)</Label>
           <Input
             id="inputTagsId"
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
+            name="tags"
+            defaultValue={isEdit ? (task?.tags?.join(', ') ?? '') : ''}
           />
         </DivRow>
+
+        {mode === 'edit' && (
+          <input type="hidden" name="id" value={task?._id ?? ''} />
+        )}
 
         {error && <PError>{error}</PError>}
 
