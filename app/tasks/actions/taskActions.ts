@@ -5,6 +5,7 @@ import { connectToDatabase } from '@/lib/db';
 import { Task } from '@/lib/models/Task';
 import { getAuthFromCookies } from '@/lib/authServer';
 import type { ITaskDTO, TStatus, TPriority } from '@/lib/types/taskTypes';
+import type { AuthTokenPayload } from '@/lib/auth';
 
 type TaskPayload = {
   title: string;
@@ -37,17 +38,23 @@ const toTaskDto = (task: {
   updatedAt: task.updatedAt.toISOString(),
 });
 
-const requireAuth = async (): Promise<{ ok: false; error: string } | null> => {
+const requireAuth = async (): Promise<
+  { ok: false; error: string } | AuthTokenPayload
+> => {
   const auth = await getAuthFromCookies();
   if (!auth) {
     return { ok: false, error: 'unauthorized' };
   }
-  return null;
+  return auth;
 };
 
 const createTaskAction = async (payload: TaskPayload): Promise<TaskResult> => {
-  const authError = await requireAuth();
-  if (authError) return authError;
+  const auth = await requireAuth();
+
+  if ('ok' in auth) {
+    const authErrorObject = auth;
+    return authErrorObject;
+  }
 
   await connectToDatabase();
 
@@ -62,6 +69,7 @@ const createTaskAction = async (payload: TaskPayload): Promise<TaskResult> => {
     status: payload.status ?? 'BACKLOG',
     priority: payload.priority ?? 'MEDIUM',
     tags: payload.tags ?? [],
+    userId: auth.userId,
   });
 
   return { ok: true, task: toTaskDto(task) };
@@ -71,8 +79,12 @@ const updateTaskAction = async (
   id: string,
   payload: TaskPayload,
 ): Promise<TaskResult> => {
-  const authError = await requireAuth();
-  if (authError) return authError;
+  const auth = await requireAuth();
+
+  if ('ok' in auth) {
+    const authErrorObject = auth;
+    return authErrorObject;
+  }
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return { ok: false, error: 'invalid id' };
@@ -90,7 +102,11 @@ const updateTaskAction = async (
     ...(payload.tags && { tags: payload.tags }),
   };
 
-  const updatedTask = await Task.findByIdAndUpdate(id, updates, { new: true });
+  const updatedTask = await Task.findOneAndUpdate(
+    { _id: id, userId: auth.userId },
+    updates,
+    { new: true },
+  );
 
   if (!updatedTask) {
     return { ok: false, error: 'task not found' };
@@ -100,8 +116,12 @@ const updateTaskAction = async (
 };
 
 export const deleteTaskAction = async (id: string): Promise<DeleteResult> => {
-  const authError = await requireAuth();
-  if (authError) return authError;
+  const auth = await requireAuth();
+
+  if ('ok' in auth) {
+    const authErrorObject = auth;
+    return authErrorObject;
+  }
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return { ok: false, error: 'invalid id' };
@@ -109,7 +129,10 @@ export const deleteTaskAction = async (id: string): Promise<DeleteResult> => {
 
   await connectToDatabase();
 
-  const deletedTask = await Task.findByIdAndDelete(id).lean();
+  const deletedTask = await Task.findOneAndDelete({
+    _id: id,
+    userId: auth.userId,
+  });
   if (!deletedTask) {
     return { ok: false, error: 'task not found' };
   }
