@@ -15,7 +15,6 @@ const AuthLanding = () => {
   const dispatch = useAppDispatch();
 
   const [mode, setMode] = useState<Mode>('login');
-  const [confirm, setConfirm] = useState('');
   const [clientError, setClientError] = useState<string | null>(null);
 
   const [loginState, loginAction] = useActionState(loginFormAction, {
@@ -31,8 +30,12 @@ const AuthLanding = () => {
   const action = isRegister ? registerAction : loginAction;
   const state = isRegister ? registerState : loginState;
 
-  const onClientValidate = (e: React.FormEvent) => {
+  const onClientValidate = (e: React.FormEvent<HTMLFormElement>) => {
     setClientError(null);
+
+    const formData = new FormData(e.currentTarget);
+    const password = String(formData.get('password') ?? '');
+    const confirm = String(formData.get('confirm') ?? '');
 
     if (isRegister && !confirm) {
       setClientError('Please confirm your password.');
@@ -40,10 +43,7 @@ const AuthLanding = () => {
       return;
     }
 
-    if (
-      isRegister &&
-      (e.target as HTMLFormElement).password.value !== confirm
-    ) {
+    if (isRegister && password !== confirm) {
       setClientError('Passwords do not match.');
       e.preventDefault();
     }
@@ -119,8 +119,6 @@ const AuthLanding = () => {
                   id="inputConfirmPasswordId"
                   type="password"
                   name="confirm"
-                  value={confirm}
-                  onChange={(e) => setConfirm(e.target.value)}
                   placeholder="••••••••"
                   required
                 />
