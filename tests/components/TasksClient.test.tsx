@@ -2,18 +2,27 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import axios from 'axios';
 
 import TasksClient from '@/app/tasks/ui/TasksClient';
 
 import tasksReducer from '@/lib/store/slices/tasksSlice';
 import tasksUiReducer from '@/lib/store/slices/tasksUISlice';
+import { logoutAction } from '@/app/actions/authActions';
+import { deleteTaskAction } from '@/app/tasks/actions/taskActions';
 
 import type { ReactElement } from 'react';
 import type { ITaskDTO } from '@/lib/types/taskTypes';
 
-jest.mock('axios');
-const mockedAxios = axios as jest.Mocked<typeof axios>;
+jest.mock('@/app/actions/authActions', () => ({
+  logoutAction: jest.fn(),
+}));
+
+jest.mock('@/app/tasks/actions/taskActions', () => ({
+  deleteTaskAction: jest.fn(),
+}));
+
+const mockedLogout = logoutAction as jest.Mock;
+const mockedDelete = deleteTaskAction as jest.Mock;
 
 const push = jest.fn();
 jest.mock('next/navigation', () => ({
@@ -58,18 +67,14 @@ describe('TasksClient', () => {
   });
 
   it('logs out and redirects', async () => {
-    mockedAxios.post.mockResolvedValue({ data: { ok: true } } as never);
+    mockedLogout.mockResolvedValue({ ok: true });
 
     renderWithStore(<TasksClient initialTasks={tasks} />);
 
     await userEvent.click(screen.getByRole('button', { name: /logout/i }));
 
-    expect(mockedAxios.post).toHaveBeenCalledWith(
-      '/api/auth/logout',
-      {},
-      { withCredentials: true },
-    );
-    expect(push).toHaveBeenCalledWith('/');
+    expect(mockedLogout).toHaveBeenCalled();
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/'));
   });
 
   it('filters by status and priority', async () => {
@@ -105,7 +110,7 @@ describe('TasksClient', () => {
   });
 
   it('asks confirm on delete and calls API', async () => {
-    mockedAxios.delete.mockResolvedValue({ data: { ok: true } } as never);
+    mockedDelete.mockResolvedValue({ ok: true });
 
     renderWithStore(<TasksClient initialTasks={tasks} />);
     await userEvent.click(
@@ -119,8 +124,7 @@ describe('TasksClient', () => {
     await userEvent.click(
       within(confirmDialogActions).getByRole('button', { name: /delete/i }),
     );
-    await waitFor(() =>
-      expect(mockedAxios.delete).toHaveBeenCalledWith('/api/tasks/1'),
-    );
+
+    expect(mockedDelete).toHaveBeenCalledWith('1');
   });
 });

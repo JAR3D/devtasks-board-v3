@@ -16,6 +16,13 @@ jest.mock('@/lib/models/Task', () => ({
   },
 }));
 
+jest.mock('@/lib/authServer', () => ({
+  getAuthFromCookies: jest.fn().mockResolvedValue({
+    userId: 'test',
+    email: 'test@example.com',
+  }),
+}));
+
 describe('GET /api/tasks', () => {
   it('returns tasks', async () => {
     const lean = jest.fn().mockResolvedValue([{ _id: '1' }]);

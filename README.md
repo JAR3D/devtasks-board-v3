@@ -1,6 +1,6 @@
 # DevTasks Board v3
 
-DevTasks Board is a full-stack task board built with Next.js, MongoDB, and TypeScript. It includes a kanban-style board, filters, and CRUD APIs for tasks.
+DevTasks Board is a full-stack task board built with Next.js, MongoDB, and TypeScript. It includes a kanban-style board, filters, and CRUD APIs for tasks, plus server actions for auth and task mutations.
 
 ## Features
 
@@ -8,8 +8,9 @@ DevTasks Board is a full-stack task board built with Next.js, MongoDB, and TypeS
 - Kanban-style board grouped by status (Backlog, In Progress, Done)
 - Filter by status and priority, plus text search
 - REST API for tasks powered by Next.js route handlers
+- Server Actions for login/register/logout and task mutations (create/update/delete)
 - UI and API route coverage with Jest + Testing Library
-- Redux Toolkit state management with slices, selectors, and async thunks
+- Redux Toolkit state management with slices and selectors
 - JWT authentication with login/register and HttpOnly cookies
 
 ## Tech Stack
@@ -21,22 +22,25 @@ DevTasks Board is a full-stack task board built with Next.js, MongoDB, and TypeS
 - Jest + Testing Library
 - Redux Toolkit + React Redux
 - JSON Web Token (jsonwebtoken) + bcrypt
+- Next.js Server Actions
 
 ## State Management
 
 This project uses Redux Toolkit for client state:
-- tasks slice: task list and CRUD updates via thunks
+- tasks slice: task list updates (set/upsert/remove)
 - tasksUi slice: filters, modal state, delete error
 - selectors: memoized filtered/grouped task views
-- thunks: async API calls in lib/store/thunks/tasksThunks.ts
+- server actions handle auth and task mutations
 
 ## Project Structure
 
 ```
 app/
   providers.tsx         # Redux Provider setup
+  actions/authActions.ts # Server actions for auth
   api/auth/             # Auth routes (register/login/logout)
   api/tasks/            # REST routes for tasks
+  tasks/actions/        # Server actions for task mutations
   tasks/ui/             # Task board UI components
   ui/AuthLanding.tsx    # Landing page auth UI
 lib/
@@ -45,7 +49,7 @@ lib/
   db.ts                 # Mongo connection
   models/Task.ts        # Task schema
   models/User.ts        # User schema
-  store/                # Redux store, slices, selectors, thunks
+  store/                # Redux store, slices, selectors
 tests/
   api/                  # API route tests
   components/           # UI tests

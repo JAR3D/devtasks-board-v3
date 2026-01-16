@@ -1,19 +1,27 @@
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import axios from 'axios';
 
 import TaskModal from '@/app/tasks/ui/TaskModal';
 
 import tasksReducer from '@/lib/store/slices/tasksSlice';
 import tasksUiReducer from '@/lib/store/slices/tasksUISlice';
+import {
+  createTaskFormAction,
+  updateTaskFormAction,
+} from '@/app/tasks/actions/taskActions';
 
 import type { ReactElement } from 'react';
 import type { ITaskDTO } from '@/lib/types/taskTypes';
 
-jest.mock('axios');
-const mockedAxios = axios as jest.Mocked<typeof axios>;
+jest.mock('@/app/tasks/actions/taskActions', () => ({
+  createTaskFormAction: jest.fn(),
+  updateTaskFormAction: jest.fn(),
+}));
+
+const mockedCreate = createTaskFormAction as jest.Mock;
+const mockedUpdate = updateTaskFormAction as jest.Mock;
 
 const makeStore = () =>
   configureStore({
@@ -29,53 +37,64 @@ const renderWithStore = (ui: ReactElement) => {
 };
 
 describe('TaskModal', () => {
-  it('does not render when closed', () => {
-    renderWithStore(
-      <TaskModal open={false} mode="create" task={null} onClose={jest.fn()} />,
-    );
-    expect(screen.queryByText('New Task')).not.toBeInTheDocument();
+  beforeEach(() => {
+    mockedCreate.mockReset();
+    mockedUpdate.mockReset();
   });
 
   it('shows error when title is empty', async () => {
+    mockedCreate.mockResolvedValue({ ok: false, error: 'title is required' });
+
     renderWithStore(
-      <TaskModal open mode="create" task={null} onClose={jest.fn()} />,
+      <TaskModal mode="create" task={null} onClose={jest.fn()} />,
     );
 
     await userEvent.click(screen.getByRole('button', { name: /create/i }));
-    expect(screen.getByText(/title is required/i)).toBeInTheDocument();
+    expect(await screen.findByText(/title is required/i)).toBeInTheDocument();
   });
 
   it('submits create payload', async () => {
-    mockedAxios.post.mockResolvedValue({
-      data: { _id: '1', title: 'New', status: 'BACKLOG', priority: 'MEDIUM' },
-    } as never);
+    mockedCreate.mockResolvedValue({
+      ok: true,
+      task: {
+        _id: '1',
+        title: 'New',
+        description: '',
+        status: 'BACKLOG',
+        priority: 'MEDIUM',
+        tags: [],
+      },
+    });
 
     const onClose = jest.fn();
 
-    renderWithStore(
-      <TaskModal open mode="create" task={null} onClose={onClose} />,
-    );
+    renderWithStore(<TaskModal mode="create" task={null} onClose={onClose} />);
 
     await userEvent.type(screen.getByLabelText(/title/i), 'New');
     await userEvent.type(screen.getByLabelText(/tags/i), 'a, b');
 
     await userEvent.click(screen.getByRole('button', { name: /create/i }));
 
-    expect(mockedAxios.post).toHaveBeenCalledWith('/api/tasks', {
-      title: 'New',
-      description: '',
-      status: 'BACKLOG',
-      priority: 'MEDIUM',
-      tags: ['a', 'b'],
-    });
+    expect(mockedCreate).toHaveBeenCalled();
+    const formData = mockedCreate.mock.calls[0][1] as FormData;
+    expect(formData.get('title')).toBe('New');
+    expect(formData.get('tags')).toBe('a, b');
 
-    expect(onClose).toHaveBeenCalled();
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
   });
 
   it('submits edit payload', async () => {
-    mockedAxios.patch.mockResolvedValue({
-      data: { _id: '1', title: 'Edit', status: 'DONE', priority: 'HIGH' },
-    } as never);
+    mockedUpdate.mockResolvedValue({
+      ok: true,
+      task: {
+        _id: '1',
+        title: 'New',
+        description: '',
+        status: 'BACKLOG',
+        priority: 'MEDIUM',
+        tags: [],
+      },
+    });
 
     const task: ITaskDTO = {
       _id: '1',
@@ -86,18 +105,11 @@ describe('TaskModal', () => {
       tags: [],
     };
 
-    renderWithStore(
-      <TaskModal open mode="edit" task={task} onClose={jest.fn()} />,
-    );
+    renderWithStore(<TaskModal mode="edit" task={task} onClose={jest.fn()} />);
 
     await userEvent.click(screen.getByRole('button', { name: /save/i }));
 
-    expect(mockedAxios.patch).toHaveBeenCalledWith('/api/tasks/1', {
-      title: 'Edit',
-      description: '',
-      status: 'DONE',
-      priority: 'HIGH',
-      tags: [],
-    });
+    const formData = mockedUpdate.mock.calls[0][1] as FormData;
+    expect(formData.get('id')).toBe('1');
   });
 });

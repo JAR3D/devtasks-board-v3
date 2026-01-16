@@ -10,7 +10,8 @@ import TaskModal from './TaskModal';
 import ConfirmDialog from './ConfirmDialog';
 
 import { useAppSelector, useAppDispatch } from '@/lib/store/hooks';
-import { setTasks } from '@/lib/store/slices/tasksSlice';
+import { setTasks, removeTask } from '@/lib/store/slices/tasksSlice';
+import { setLoggedOut } from '@/lib/store/slices/authSlice';
 import {
   setStatusFilter,
   setPriorityFilter,
@@ -24,8 +25,8 @@ import {
   clearDeleteError,
 } from '@/lib/store/slices/tasksUISlice';
 import { selectGroupedByStatus } from '@/lib/store/selectors/tasksSelectors';
-import { deleteTask } from '@/lib/store/thunks/tasksThunks';
-import { appLogout } from '@/lib/store/thunks/authThunks';
+import { logoutAction } from '@/app/actions/authActions';
+import { deleteTaskAction } from '../actions/taskActions';
 
 import type { ChangeEvent } from 'react';
 import type { ITaskDTO, TStatus, TPriority } from '@/lib/types/taskTypes';
@@ -87,8 +88,14 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
     dispatch(clearDeleteError());
 
     try {
-      await dispatch(deleteTask(taskToDelete._id)).unwrap();
-      dispatch(clearDeleteError());
+      const result = await deleteTaskAction(taskToDelete._id);
+
+      if (!result.ok) {
+        dispatch(setDeleteError(result.error));
+        return;
+      }
+
+      dispatch(removeTask(taskToDelete._id));
       dispatch(closeDeleteConfirm());
     } catch {
       dispatch(
@@ -109,7 +116,14 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
     setLogoutLoading(true);
 
     try {
-      await dispatch(appLogout()).unwrap();
+      const result = await logoutAction();
+
+      if (!result.ok) {
+        setLogoutError(result.error);
+        return;
+      }
+
+      dispatch(setLoggedOut());
       router.push('/');
     } catch {
       setLogoutError('Unable to log out. Please try again.');
@@ -160,21 +174,23 @@ const TasksClient = ({ initialTasks }: ITasksClient) => {
         onDelete={onAskDelete}
       />
 
-      <TaskModal
-        open={taskModalOpen}
-        mode={taskModalMode}
-        task={selectedTask}
-        onClose={() => dispatch(closeTaskModal())}
-      />
+      {taskModalOpen && (
+        <TaskModal
+          mode={taskModalMode}
+          task={selectedTask}
+          onClose={() => dispatch(closeTaskModal())}
+        />
+      )}
 
-      <ConfirmDialog
-        open={confirmDialogOpen}
-        title="Delete task?"
-        message={`This will permanently delete "${taskToDelete?.title ?? ''}".`}
-        onClose={onCloseConfirmDialog}
-        onConfirm={confirmDelete}
-        error={deleteError}
-      />
+      {confirmDialogOpen && (
+        <ConfirmDialog
+          title="Delete task?"
+          message={`This will permanently delete "${taskToDelete?.title ?? ''}".`}
+          onClose={onCloseConfirmDialog}
+          onConfirm={confirmDelete}
+          error={deleteError}
+        />
+      )}
     </Main>
   );
 };
